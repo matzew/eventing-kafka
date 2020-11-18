@@ -18,10 +18,9 @@ package kafka
 
 import (
 	"fmt"
+	kafkasource "knative.dev/eventing-kafka/pkg/source"
 	"net/http"
 	"strings"
-
-	kafkasource "knative.dev/eventing-kafka/pkg/source"
 
 	"go.opencensus.io/trace"
 	"knative.dev/eventing/pkg/adapter/v2"
@@ -82,19 +81,19 @@ func (a *Adapter) Start(ctx context.Context) error {
 }
 
 func (a *Adapter) start(stopCh <-chan struct{}) error {
+	// init consumer group
+	addrs, config, err := kafkasource.NewConfig(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to create the config: %w", err)
+	}
 	a.logger.Infow("Starting with config: ",
 		zap.String("Topics", strings.Join(a.config.Topics, ",")),
 		zap.String("ConsumerGroup", a.config.ConsumerGroup),
 		zap.String("SinkURI", a.config.Sink),
 		zap.String("Name", a.config.Name),
 		zap.String("Namespace", a.config.Namespace),
+		zap.String("BootstrapServer", strings.Join(addrs, "'")),
 	)
-
-	// init consumer group
-	addrs, config, err := kafkasource.NewConfig(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to create the config: %w", err)
-	}
 
 	consumerGroupFactory := consumer.NewConsumerGroupFactory(addrs, config)
 	group, err := consumerGroupFactory.StartConsumerGroup(a.config.ConsumerGroup, a.config.Topics, a.logger, a)

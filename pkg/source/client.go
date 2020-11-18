@@ -22,9 +22,43 @@ import (
 	"crypto/x509"
 	"time"
 
+	"crypto/sha256"
+	"crypto/sha512"
+	"hash"
+
+	"github.com/xdg/scram"
+
 	"github.com/Shopify/sarama"
 	"github.com/kelseyhightower/envconfig"
 )
+
+var SHA256 scram.HashGeneratorFcn = func() hash.Hash { return sha256.New() }
+var SHA512 scram.HashGeneratorFcn = func() hash.Hash { return sha512.New() }
+
+type XDGSCRAMClient struct {
+	*scram.Client
+	*scram.ClientConversation
+	scram.HashGeneratorFcn
+}
+
+func (x *XDGSCRAMClient) Begin(userName, password, authzID string) (err error) {
+	x.Client, err = x.HashGeneratorFcn.NewClient(userName, password, authzID)
+	if err != nil {
+		return err
+	}
+	x.ClientConversation = x.Client.NewConversation()
+	return nil
+}
+
+func (x *XDGSCRAMClient) Step(challenge string) (response string, err error) {
+	response, err = x.ClientConversation.Step(challenge)
+	return
+}
+
+func (x *XDGSCRAMClient) Done() bool {
+	return x.ClientConversation.Done()
+}
+
 
 type AdapterSASL struct {
 	Enable   bool   `envconfig:"KAFKA_NET_SASL_ENABLE" required:"false"`
@@ -62,6 +96,11 @@ func NewConfig(ctx context.Context) ([]string, *sarama.Config, error) {
 
 	if env.Net.SASL.Enable {
 		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Handshake = true
+
+		cfg.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA512} }
+		cfg.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
+
 		cfg.Net.SASL.User = env.Net.SASL.User
 		cfg.Net.SASL.Password = env.Net.SASL.Password
 	}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export EVENTING_NAMESPACE="${EVENTING_NAMESPACE:-knative-eventing}"
-export TEST_EVENTING_NAMESPACE=$EVENTING_NAMESPACE
+export SYSTEM_NAMESPACE=$EVENTING_NAMESPACE
 export KNATIVE_DEFAULT_NAMESPACE=$EVENTING_NAMESPACE
 export ZIPKIN_NAMESPACE=$EVENTING_NAMESPACE
 export CONFIG_TRACING_CONFIG="test/config/config-tracing.yaml"
@@ -10,14 +10,8 @@ export STRIMZI_INSTALLATION_CONFIG="$(mktemp)"
 export KAFKA_INSTALLATION_CONFIG="test/config/100-kafka-ephemeral-triple-2.6.0.yaml"
 export KAFKA_USERS_CONFIG="test/config/100-strimzi-users-0.20.0.yaml"
 export KAFKA_PLAIN_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
-KAFKA_CLUSTER_URL=${KAFKA_PLAIN_CLUSTER_URL}
-# Namespace where we install Eventing components
-export SYSTEM_NAMESPACE="knative-eventing"
-
-# Zipkin setup
 readonly KNATIVE_EVENTING_MONITORING_YAML="test/config/monitoring.yaml"
-
-
+KAFKA_CLUSTER_URL=${KAFKA_PLAIN_CLUSTER_URL}
 
 function scale_up_workers(){
   local cluster_api_ns="openshift-machine-api"
@@ -188,8 +182,8 @@ function run_e2e_tests(){
   the source tests REQUIRE the secrets, hence we create it here:
   create_auth_secrets || return 1
 
-  oc get ns ${TEST_EVENTING_NAMESPACE} 2>/dev/null || TEST_EVENTING_NAMESPACE="knative-eventing"
-  sed "s/namespace: ${KNATIVE_DEFAULT_NAMESPACE}/namespace: ${TEST_EVENTING_NAMESPACE}/g" ${CONFIG_TRACING_CONFIG} | oc replace -f -
+  oc get ns ${SYSTEM_NAMESPACE} 2>/dev/null || SYSTEM_NAMESPACE="knative-eventing"
+  sed "s/namespace: ${KNATIVE_DEFAULT_NAMESPACE}/namespace: ${SYSTEM_NAMESPACE}/g" ${CONFIG_TRACING_CONFIG} | oc replace -f -
   local test_name="${1:-}"
   local run_command=""
   local failed=0

@@ -143,6 +143,27 @@ function install_knative_kafka_source(){
   wait_until_pods_running $EVENTING_NAMESPACE || return 1
 }
 
+function uinstall_knative_kafka {
+  uninstall_knative_kafka_channel
+  uninstall_knative_kafka_source
+}
+
+function uninstall_knative_kafka_channel(){
+  header "Uninstalling Knative Kafka Channel"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  oc delete -f ${RELEASE_YAML} || return 1
+}
+
+function uninstall_knative_kafka_source(){
+  header "InstalUninstallingling Knative Kafka Source"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-source-ci.yaml"
+
+  oc delete -f ${RELEASE_YAML} || return 1
+}
+
 function create_auth_secrets() {
   create_tls_secrets
   create_sasl_secrets

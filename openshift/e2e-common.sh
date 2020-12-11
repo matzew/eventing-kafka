@@ -10,6 +10,8 @@ export STRIMZI_INSTALLATION_CONFIG="$(mktemp)"
 export KAFKA_INSTALLATION_CONFIG="test/config/100-kafka-ephemeral-triple-2.6.0.yaml"
 export KAFKA_USERS_CONFIG="test/config/100-strimzi-users-0.20.0.yaml"
 export KAFKA_PLAIN_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+export KAFKA_TLS_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9093"
+export KAFKA_SASL_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9094"
 readonly KNATIVE_EVENTING_MONITORING_YAML="test/config/monitoring.yaml"
 KAFKA_CLUSTER_URL=${KAFKA_PLAIN_CLUSTER_URL}
 

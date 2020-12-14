@@ -26,6 +26,8 @@ failed=0
 
 (( !failed )) && run_e2e_tests || failed=1
 
+(( !failed )) && uinstall_knative_kafka || failed=1
+
 (( failed )) && dump_cluster_state
 
 (( failed )) && exit 1

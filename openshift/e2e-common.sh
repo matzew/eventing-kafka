@@ -97,6 +97,27 @@ function install_serverless(){
   return $failed
 }
 
+function uinstall_knative_kafka {
+  uninstall_knative_kafka_channel
+  uninstall_knative_kafka_source
+}
+
+function uninstall_knative_kafka_channel(){
+  header "Uninstalling Knative Kafka Channel"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  oc delete -f ${RELEASE_YAML} --ignore-not-found=true || return 1
+}
+
+function uninstall_knative_kafka_source(){
+  header "InstalUninstallingling Knative Kafka Source"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-source-ci.yaml"
+
+  oc delete -f ${RELEASE_YAML} --ignore-not-found=true || return 1
+}
+
 function install_knative_eventing(){
   header "Installing Knative Eventing 0.19.2"
 

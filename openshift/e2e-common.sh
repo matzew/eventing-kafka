@@ -60,10 +60,10 @@ function timeout() {
 # Setup zipkin
 function install_tracing() {
   echo "Installing Zipkin..."
-  kubectl apply -f "${KNATIVE_EVENTING_MONITORING_YAML}"
-  wait_until_pods_running knative-eventing || return 1
+  sed "s/\${SYSTEM_NAMESPACE}/${SYSTEM_NAMESPACE}/g" < "${KNATIVE_EVENTING_MONITORING_YAML}" | oc apply -f -
+  wait_until_pods_running "${SYSTEM_NAMESPACE}" || fail_test "Zipkin inside eventing did not come up"
   # Setup config tracing for tracing tests
-  kubectl apply -f "${CONFIG_TRACING_CONFIG}"
+  sed "s/\${SYSTEM_NAMESPACE}/${SYSTEM_NAMESPACE}/g" <  "${CONFIG_TRACING_CONFIG}" | oc apply -f -
 }
 
 function install_strimzi(){

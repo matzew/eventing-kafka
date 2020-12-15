@@ -418,6 +418,8 @@ metadata:
   namespace: knative-eventing
 data:
   bootstrapServers: REPLACE_WITH_CLUSTER_URL
+  authSecretName: ""
+  authSecretNamespace: ""
 ---
 apiVersion: v1
 kind: ConfigMap

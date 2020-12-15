@@ -10,6 +10,10 @@ export STRIMZI_INSTALLATION_CONFIG="$(mktemp)"
 export KAFKA_INSTALLATION_CONFIG="test/config/100-kafka-ephemeral-triple-2.6.0.yaml"
 export KAFKA_USERS_CONFIG="test/config/100-strimzi-users-0.20.0.yaml"
 export KAFKA_PLAIN_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+export KAFKA_TLS_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9093"
+export KAFKA_SASL_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9094"
+readonly KAFKA_CHANNEL_INSTALL_TLS="openshift/release/knative-eventing-kafka-channel-tls.yaml"
+readonly KAFKA_CHANNEL_INSTALL_SASL="openshift/release/knative-eventing-kafka-channel-sasl.yaml"
 readonly KNATIVE_EVENTING_MONITORING_YAML="test/config/monitoring.yaml"
 KAFKA_CLUSTER_URL=${KAFKA_PLAIN_CLUSTER_URL}
 
@@ -145,8 +149,46 @@ function install_knative_kafka_channel(){
 
   cat ${RELEASE_YAML} \
   | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
-  | sed "s/authSecretName: \"\"/#authSecretName: strimzi-sasl-secret/" \
-  | sed "s/authSecretNamespace: \"\"/#authSecretNamespace: $EVENTING_NAMESPACE/" \
+  | oc apply --filename -
+
+  wait_until_pods_running $EVENTING_NAMESPACE || return 1
+}
+
+function install_knative_kafka_channel_tls(){
+  header "Installing Knative Kafka Channel with TLS"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-controller|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-controller}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-dispatcher|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-dispatcher}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-webhook|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-webhook}|g"                                 ${RELEASE_YAML}
+
+  KAFKA_CLUSTER_URL=${KAFKA_TLS_CLUSTER_URL}
+
+  cp ${RELEASE_YAML} ${KAFKA_CHANNEL_INSTALL_TLS}
+
+  cat ${KAFKA_CHANNEL_INSTALL_TLS} \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}\n  authSecretName: strimzi-tls-secret\n  authSecretNamespace: $EVENTING_NAMESPACE/" \
+  | oc apply --filename -
+
+  wait_until_pods_running $EVENTING_NAMESPACE || return 1
+}
+
+function install_knative_kafka_channel_sasl(){
+  header "Installing Knative Kafka Channel with SASL"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-controller|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-controller}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-dispatcher|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-dispatcher}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-webhook|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-webhook}|g"                                 ${RELEASE_YAML}
+
+  KAFKA_CLUSTER_URL=${KAFKA_SASL_CLUSTER_URL}
+
+  cp ${RELEASE_YAML} ${KAFKA_CHANNEL_INSTALL_SASL}
+
+  cat ${KAFKA_CHANNEL_INSTALL_SASL} \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}\n  authSecretName: strimzi-sasl-secret\n  authSecretNamespace: $EVENTING_NAMESPACE/" \
   | oc apply --filename -
 
   wait_until_pods_running $EVENTING_NAMESPACE || return 1
@@ -219,7 +261,29 @@ function run_e2e_tests(){
 
   go_test_e2e -tags=e2e,source -timeout=90m -parallel=12 ./test/e2e \
     "$run_command" \
-    $common_opts --dockerrepo "quay.io/openshift-knative" --tag "v0.18" || failed=$?
+    $common_opts --dockerrepo "quay.io/openshift-knative" --tag "v0.19" || failed=$?
+
+  return $failed
+}
+
+function run_e2e_channel_tests(){
+  header "Testing the KafkaChannel with auth"
+
+  oc get ns ${SYSTEM_NAMESPACE} 2>/dev/null || SYSTEM_NAMESPACE="knative-eventing"
+  sed "s/namespace: ${KNATIVE_DEFAULT_NAMESPACE}/namespace: ${SYSTEM_NAMESPACE}/g" ${CONFIG_TRACING_CONFIG} | oc replace -f -
+  local test_name="${1:-}"
+  local run_command=""
+  local failed=0
+  local channels=messaging.knative.dev/v1beta1:KafkaChannel
+
+  local common_opts=" -channels=$channels --kubeconfig $KUBECONFIG" ## --imagetemplate $TEST_IMAGE_TEMPLATE"
+  if [ -n "$test_name" ]; then
+      local run_command="-run ^(${test_name})$"
+  fi
+
+  go_test_e2e -tags=e2e -timeout=90m -parallel=12 ./test/e2e \
+    "$run_command" \
+    $common_opts --dockerrepo "quay.io/openshift-knative" --tag "v0.19" || failed=$?
 
   return $failed
 }

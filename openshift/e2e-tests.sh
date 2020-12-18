@@ -24,7 +24,8 @@ failed=0
 
 (( !failed )) && install_tracing || failed=1
 
-# (( !failed )) && run_e2e_tests || failed=1
+# Test...
+(( !failed )) && run_e2e_tests || failed=1
 
 (( failed )) && dump_cluster_state
 

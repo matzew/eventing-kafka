@@ -189,14 +189,14 @@ function run_e2e_tests(){
   local failed=0
   local channels=messaging.knative.dev/v1beta1:KafkaChannel
 
-  local common_opts=" -channels=$channels --kubeconfig $KUBECONFIG" ## --imagetemplate $TEST_IMAGE_TEMPLATE"
+  local common_opts=" -channels=$channels --kubeconfig $KUBECONFIG --imagetemplate $TEST_IMAGE_TEMPLATE"
   if [ -n "$test_name" ]; then
       local run_command="-run ^(${test_name})$"
   fi
 
   go_test_e2e -tags=e2e,source -timeout=90m -parallel=12 ./test/e2e \
     "$run_command" \
-    $common_opts --dockerrepo "quay.io/openshift-knative" --tag "v0.18" || failed=$?
+    $common_opts || failed=$?
 
   return $failed
 }

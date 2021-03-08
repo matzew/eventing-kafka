@@ -10,7 +10,7 @@ fixes needed only for the OpenShift side of things.
 
 ## How this repository works ?
 
-The `master` branch holds up-to-date specific [openshift files](./openshift) 
+The `main` branch holds up-to-date specific [openshift files](./openshift)
 that are necessary for CI setups and maintaining it. This includes:
 
 - Scripts to create a new release branch from `upstream`

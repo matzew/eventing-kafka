@@ -460,7 +460,7 @@ spec:
       serviceAccountName: kafka-ch-controller
       containers:
       - name: controller
-        image: registry.svc.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-controller
+        image: registry.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-controller
         env:
         - name: CONFIG_LOGGING_NAME
           value: config-logging
@@ -477,7 +477,7 @@ spec:
         - name: CONFIG_LEADERELECTION_NAME
           value: config-leader-election
         - name: DISPATCHER_IMAGE
-          value: registry.svc.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-dispatcher
+          value: registry.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-dispatcher
         ports:
         - containerPort: 9090
           name: metrics
@@ -511,7 +511,7 @@ spec:
     spec:
       containers:
       - name: dispatcher
-        image: registry.svc.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-dispatcher
+        image: registry.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-consolidated-dispatcher
         env:
         - name: SYSTEM_NAMESPACE
           value: ''
@@ -624,7 +624,7 @@ spec:
       containers:
       - name: kafka-webhook
         terminationMessagePolicy: FallbackToLogsOnError
-        image: registry.svc.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-webhook
+        image: registry.ci.openshift.org/openshift/knative-v0.21.0:knative-eventing-kafka-webhook
         env:
         - name: SYSTEM_NAMESPACE
           valueFrom:

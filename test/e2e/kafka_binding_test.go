@@ -106,6 +106,7 @@ func testKafkaBinding(t *testing.T, version string, messageKey string, messageHe
 }
 
 func TestKafkaBinding(t *testing.T) {
+	t.Skip("temp skipping this")
 	tests := map[string]struct {
 		messageKey     string
 		messageHeaders map[string]string

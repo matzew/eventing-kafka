@@ -13,7 +13,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.2.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ghodss/yaml v1.0.0
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/gofuzz v1.2.0
 	github.com/google/uuid v1.2.0
@@ -27,7 +27,7 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	k8s.io/api v0.19.7
 	k8s.io/apimachinery v0.19.7
@@ -36,5 +36,5 @@ require (
 	knative.dev/eventing v0.22.1-0.20210406191848-5171353bd1ed
 	knative.dev/hack v0.0.0-20210325223819-b6ab329907d3
 	knative.dev/networking v0.0.0-20210406043338-e38eb2be3962
-	knative.dev/pkg v0.0.0-20210406170139-b8e331a6abf3
+	knative.dev/pkg v0.0.0-20210407160949-9050838f895c
 )

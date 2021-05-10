@@ -233,3 +233,28 @@ function run_e2e_tests(){
 
   return $failed
 }
+
+function run_e2e_channel_auth_tests(){
+  header "Testing the KafkaChannel with auth"
+
+  create_auth_secrets || return 1
+
+  oc get ns ${SYSTEM_NAMESPACE} 2>/dev/null || SYSTEM_NAMESPACE="knative-eventing"
+  oc -n ${SYSTEM_NAMESPACE} patch knativeeventing/knative-eventing --type=merge --patch='{"spec": {"config": { "tracing": {"enable":"true","backend":"zipkin", "zipkin-endpoint":"http://zipkin.'${SYSTEM_NAMESPACE}'.svc.cluster.local:9411/api/v2/spans", "debug":"true", "sample-rate":"1.0"}}}}'
+
+  local test_name="${1:-}"
+  local run_command=""
+  local failed=0
+  local channels=messaging.knative.dev/v1beta1:KafkaChannel
+
+  local common_opts=" -channels=$channels --kubeconfig $KUBECONFIG --imagetemplate $TEST_IMAGE_TEMPLATE"
+  if [ -n "$test_name" ]; then
+      local run_command="-run ^(${test_name})$"
+  fi
+
+  go_test_e2e -tags=e2e -timeout=90m -parallel=12 ./test/e2e \
+    "$run_command" \
+    $common_opts || failed=$?
+
+  return $failed
+}

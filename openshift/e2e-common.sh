@@ -10,6 +10,8 @@ export STRIMZI_INSTALLATION_CONFIG="$(mktemp)"
 export KAFKA_INSTALLATION_CONFIG="test/config/100-kafka-ephemeral-triple-2.6.0.yaml"
 export KAFKA_USERS_CONFIG="test/config/100-strimzi-users-0.20.0.yaml"
 export KAFKA_PLAIN_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+export KAFKA_TLS_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9093"
+export KAFKA_SASL_CLUSTER_URL="my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9094"
 readonly KNATIVE_EVENTING_MONITORING_YAML="test/config/monitoring.yaml"
 KAFKA_CLUSTER_URL=${KAFKA_PLAIN_CLUSTER_URL}
 
@@ -115,6 +117,49 @@ function install_consolidated_knative_kafka_channel(){
 
   wait_until_pods_running $EVENTING_NAMESPACE || return 1
 }
+
+function install_knative_kafka_channel_tls(){
+  header "Installing Knative Kafka Channel with TLS"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-controller|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-controller}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-dispatcher|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-dispatcher}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-webhook|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-webhook}|g"                                 ${RELEASE_YAML}
+
+  KAFKA_CLUSTER_URL=${KAFKA_TLS_CLUSTER_URL}
+
+  cat ${RELEASE_YAML} \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
+  | sed "s/authSecretName: \"\"/authSecretName: strimzi-tls-secret/" \
+  | sed "s/authSecretNamespace: \"\"/authSecretNamespace: $EVENTING_NAMESPACE/" \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
+  | oc apply --filename -
+
+  wait_until_pods_running $EVENTING_NAMESPACE || return 1
+}
+
+function install_knative_kafka_channel_sasl(){
+  header "Installing Knative Kafka Channel with SASL"
+
+  RELEASE_YAML="openshift/release/knative-eventing-kafka-channel-ci.yaml"
+
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-controller|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-controller}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-consolidated-dispatcher|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-consolidated-dispatcher}|g" ${RELEASE_YAML}
+  sed -i -e "s|registry.svc.ci.openshift.org/openshift/knative-.*:knative-eventing-kafka-webhook|${IMAGE_FORMAT//\$\{component\}/knative-eventing-kafka-webhook}|g"                                 ${RELEASE_YAML}
+
+  KAFKA_CLUSTER_URL=${KAFKA_SASL_CLUSTER_URL}
+
+  cat ${RELEASE_YAML} \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
+  | sed "s/authSecretName: \"\"/authSecretName: strimzi-sasl-secret/" \
+  | sed "s/authSecretNamespace: \"\"/authSecretNamespace: $EVENTING_NAMESPACE/" \
+  | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
+  | oc apply --filename -
+
+  wait_until_pods_running $EVENTING_NAMESPACE || return 1
+}
+
 
 function install_knative_kafka_source(){
   header "Installing Knative Kafka Source"

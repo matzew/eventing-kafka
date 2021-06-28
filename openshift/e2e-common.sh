@@ -111,7 +111,8 @@ function install_consolidated_knative_kafka_channel(){
 
   cat ${RELEASE_YAML} \
   | sed "s/REPLACE_WITH_CLUSTER_URL/${KAFKA_CLUSTER_URL}/" \
-  | oc apply --filename -
+  | cat
+  # | oc apply --filename -
 
   wait_until_pods_running $EVENTING_NAMESPACE || return 1
 }
